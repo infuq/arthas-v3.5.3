@@ -23,6 +23,7 @@ import java.util.logging.Level;
 
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.apache.logging.log4j.util.ProcessIdUtil;
 import org.xml.sax.SAXException;
 
 import com.taobao.arthas.common.AnsiLog;
@@ -319,6 +320,8 @@ public class Bootstrap {
             }
         }
 
+        System.out.println("执行com.taobao.arthas.boot.Bootstrap#main的进程ID=" + ProcessIdUtil.getProcessId());
+
         Bootstrap bootstrap = new Bootstrap();
 
         CLI cli = CLIConfigurator.define(Bootstrap.class);
@@ -569,6 +572,8 @@ public class Bootstrap {
 
             AnsiLog.info("Try to attach process " + pid);
             AnsiLog.debug("Start arthas-core.jar args: " + attachArgs);
+
+            // 关键点
             ProcessUtils.startArthasCore(pid, attachArgs);
 
             AnsiLog.info("Attach process {} success.", pid);

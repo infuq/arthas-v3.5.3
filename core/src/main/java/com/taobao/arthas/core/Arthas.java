@@ -11,8 +11,12 @@ import com.taobao.middleware.cli.CLIs;
 import com.taobao.middleware.cli.CommandLine;
 import com.taobao.middleware.cli.Option;
 import com.taobao.middleware.cli.TypedOption;
+import org.apache.logging.log4j.util.ProcessIdUtil;
 
+import java.io.FileOutputStream;
 import java.io.UnsupportedEncodingException;
+import java.lang.management.ManagementFactory;
+import java.lang.management.RuntimeMXBean;
 import java.net.URLEncoder;
 import java.util.Arrays;
 import java.util.Properties;
@@ -27,6 +31,8 @@ public class Arthas {
     }
 
     private Configure parse(String[] args) {
+
+
         Option pid = new TypedOption<Long>().setType(Long.class).setShortName("pid").setRequired(true);
         Option core = new TypedOption<String>().setType(String.class).setShortName("core").setRequired(true);
         Option agent = new TypedOption<String>().setType(String.class).setShortName("agent").setRequired(true);
@@ -97,9 +103,19 @@ public class Arthas {
         try {
             if (null == virtualMachineDescriptor) { // 使用 attach(String pid) 这种方式
                 virtualMachine = VirtualMachine.attach("" + configure.getJavaPid());
+
+
+
+
             } else {
                 virtualMachine = VirtualMachine.attach(virtualMachineDescriptor);
             }
+
+            RuntimeMXBean runtimeMXBean = ManagementFactory.getRuntimeMXBean();
+            FileOutputStream out = new FileOutputStream("D:\\pid.txt");
+            out.write(runtimeMXBean.getName().getBytes());
+            out.write("\n".getBytes());
+            out.write(("target JVM:" + configure.getJavaPid()).getBytes());
 
             Properties targetSystemProperties = virtualMachine.getSystemProperties();
             String targetJavaVersion = JavaVersionUtils.javaVersionStr(targetSystemProperties);
@@ -117,6 +133,11 @@ public class Arthas {
             //convert jar path to unicode string
             configure.setArthasAgent(encodeArg(arthasAgentPath));
             configure.setArthasCore(encodeArg(configure.getArthasCore()));
+
+            out.write("\n".getBytes());
+            out.write(arthasAgentPath.getBytes());
+            out.write("\n".getBytes());
+            out.write((configure.getArthasCore() + ";" + configure.toString()).getBytes());
             virtualMachine.loadAgent(arthasAgentPath,
                     configure.getArthasCore() + ";" + configure.toString());
         } finally {
@@ -136,6 +157,12 @@ public class Arthas {
 
     public static void main(String[] args) {
         try {
+
+/*
+            RuntimeMXBean runtimeMXBean = ManagementFactory.getRuntimeMXBean();
+            FileOutputStream out = new FileOutputStream("D:\\pid.txt");
+            out.write(runtimeMXBean.getName().getBytes());
+*/
             new Arthas(args);
         } catch (Throwable t) {
             AnsiLog.error("Start arthas failed, exception stack trace: ");
