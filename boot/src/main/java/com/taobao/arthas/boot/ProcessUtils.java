@@ -8,22 +8,15 @@ import java.io.PrintStream;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Scanner;
-import java.util.InputMismatchException;
 
 import com.taobao.arthas.common.AnsiLog;
 import com.taobao.arthas.common.ExecutingCommand;
 import com.taobao.arthas.common.IOUtils;
 import com.taobao.arthas.common.JavaVersionUtils;
 import com.taobao.arthas.common.PidUtils;
+import com.taobao.arthas.core.Arthas;
 
 /**
  *
@@ -265,46 +258,50 @@ public class ProcessUtils {
         // -core "${arthas_lib_dir}/arthas-core.jar" \
         // -agent "${arthas_lib_dir}/arthas-agent.jar"
 
-        ProcessBuilder pb = new ProcessBuilder(command);
-        try {
-            final Process proc = pb.start();
-            Thread redirectStdout = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    InputStream inputStream = proc.getInputStream();
-                    try {
-                        IOUtils.copy(inputStream, System.out);
-                    } catch (IOException e) {
-                        IOUtils.close(inputStream);
+        if (1==1) {
+            Arthas.main(command.toArray(new String[]{}));
+        } else {
+            ProcessBuilder pb = new ProcessBuilder(command);
+            try {
+                final Process proc = pb.start();
+                Thread redirectStdout = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        InputStream inputStream = proc.getInputStream();
+                        try {
+                            IOUtils.copy(inputStream, System.out);
+                        } catch (IOException e) {
+                            IOUtils.close(inputStream);
+                        }
+
                     }
+                });
 
-                }
-            });
+                Thread redirectStderr = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        InputStream inputStream = proc.getErrorStream();
+                        try {
+                            IOUtils.copy(inputStream, System.err);
+                        } catch (IOException e) {
+                            IOUtils.close(inputStream);
+                        }
 
-            Thread redirectStderr = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    InputStream inputStream = proc.getErrorStream();
-                    try {
-                        IOUtils.copy(inputStream, System.err);
-                    } catch (IOException e) {
-                        IOUtils.close(inputStream);
                     }
+                });
+                redirectStdout.start();
+                redirectStderr.start();
+                redirectStdout.join();
+                redirectStderr.join();
 
+                int exitValue = proc.exitValue();
+                if (exitValue != 0) {
+                    AnsiLog.error("attach fail, targetPid: " + targetPid);
+                    System.exit(1);
                 }
-            });
-            redirectStdout.start();
-            redirectStderr.start();
-            redirectStdout.join();
-            redirectStderr.join();
-
-            int exitValue = proc.exitValue();
-            if (exitValue != 0) {
-                AnsiLog.error("attach fail, targetPid: " + targetPid);
-                System.exit(1);
+            } catch (Throwable e) {
+                // ignore
             }
-        } catch (Throwable e) {
-            // ignore
         }
     }
 
