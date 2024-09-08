@@ -1,0 +1,4 @@
+3313@infuq-MacBook.ctc
+target JVM:2615
+/Users/infuq/.arthas/lib/3.6.7/arthas/arthas-agent.jar
+%2FUsers%2Finfuq%2F.arthas%2Flib%2F3.6.7%2Farthas%2Farthas-core.jar;;ip=192.168.101.3;arthasAgent=%2FUsers%2Finfuq%2F.arthas%2Flib%2F3.6.7%2Farthas%2Farthas-agent.jar;arthasCore=%2FUsers%2Finfuq%2F.arthas%2Flib%2F3.6.7%2Farthas%2Farthas-core.jar;javaPid=2615;
